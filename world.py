@@ -127,7 +127,13 @@ class World:
             cx, cy = b["x"] + b["w"] // 2, b["y"] + b["h"] // 2
             dist = abs(cx - x) + abs(cy - y)
             if dist <= radius + 2:
-                result.append({**b, "distance": dist, "type": b.get("type", "building")})
+                # Ensure name is present (use id as fallback)
+                entry = {**b, "distance": dist}
+                if "type" not in entry:
+                    entry["type"] = "building"
+                if "name" not in entry:
+                    entry["name"] = b.get("id", "房子")
+                result.append(entry)
         return result
 
     def add_event(self, event):

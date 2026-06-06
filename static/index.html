@@ -624,6 +624,7 @@ function render(now) {
     const a=agentStates[sb.agentId];
     if (a){sb.x=a.displayX; sb.y=a.displayY-16;}
     const alpha=Math.min(1,sb.life/30);
+    ctx.font='10px "Noto Sans SC"';
     const tw=ctx.measureText(sb.text).width+12;
     const bw=Math.max(tw,40);
     // bubble bg

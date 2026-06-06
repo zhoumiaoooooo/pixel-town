@@ -96,12 +96,31 @@ def _parse_response(content):
     except json.JSONDecodeError:
         pass
 
-    json_match = re.search(r'\{[^{}]*"action"[^{}]*\}', content, re.DOTALL)
-    if json_match:
+    # Try to extract JSON from markdown code blocks or plain text
+    # First, try ```json ... ``` blocks
+    block_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', content, re.DOTALL)
+    if block_match:
         try:
-            return json.loads(json_match.group())
+            return json.loads(block_match.group(1))
         except json.JSONDecodeError:
             pass
+
+    # Then try bare JSON with balanced braces
+    brace_count = 0
+    start = -1
+    for i, ch in enumerate(content):
+        if ch == '{':
+            if brace_count == 0:
+                start = i
+            brace_count += 1
+        elif ch == '}':
+            brace_count -= 1
+            if brace_count == 0 and start >= 0:
+                try:
+                    return json.loads(content[start:i+1])
+                except json.JSONDecodeError:
+                    start = -1
+                    continue
 
     action = "idle"
     target = ""
@@ -165,7 +184,9 @@ class DeepSeekClient:
                 resp.raise_for_status()
                 data = resp.json()
                 content = data["choices"][0]["message"]["content"]
-                return _parse_response(content)
+                result = _parse_response(content)
+                print(f"[DeepSeek] {agent_state['name']} → {result.get('action','?')}: {result.get('text','')[:30] or result.get('thought','')[:30]}")
+                return result
             except Exception as e:
                 print(f"[DeepSeek error] {e}")
                 return {"action": "idle", "target": "", "text": "", "thought": "API调用失败..."}
@@ -219,7 +240,10 @@ class MockLLMClient:
 
         if lowest == "social" and nearby and r < 0.5:
             target = random.choice(nearby)
-            etype = emotion.split("(")[0] if "(" in emotion else "calm"
+            # Extract emotion type from string like "😊happy(5/10)" or "happy"
+            etype = emotion
+            for e in ["lonely","happy","sad","angry","anxious","calm","excited","grateful","hurt","curious"]:
+                if e in emotion: etype = e; break
             phrases = {
                 "lonely": ["能陪我说说话吗...", "有时候觉得好孤单啊"],
                 "happy": ["嘿！今天真不错！", "哈哈哈你说得对"],

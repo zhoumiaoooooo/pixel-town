@@ -69,7 +69,7 @@ _AUTO_TREES = []
 for _y, _row in enumerate(_RAW):
     for _x, _ch in enumerate(_row):
         if _ch == 'T':
-            _AUTO_TREES.append({"id": f"tree_{_x}_{_y}", "x": _x, "y": _y, "type": "tree"})
+            _AUTO_TREES.append({"id": f"tree_{_x}_{_y}", "name": "大树", "x": _x, "y": _y, "type": "tree"})
 
 # Buildings / objects (tile coordinates)
 # Each building occupies a rectangular area
@@ -87,12 +87,12 @@ BUILDINGS = [
 # Decorative objects (1 tile, non-blocking or blocking)
 OBJECTS = [
     # Benches
-    {"id": "bench_1", "x": 12, "y": 20, "type": "bench", "direction": "h"},
-    {"id": "bench_2", "x": 13, "y": 20, "type": "bench", "direction": "h"},
-    {"id": "bench_3", "x": 17, "y": 21, "type": "bench", "direction": "h"},
-    {"id": "bench_4", "x": 18, "y": 21, "type": "bench", "direction": "h"},
+    {"id": "bench_1", "name": "长椅", "x": 12, "y": 20, "type": "bench", "direction": "h"},
+    {"id": "bench_2", "name": "长椅", "x": 13, "y": 20, "type": "bench", "direction": "h"},
+    {"id": "bench_3", "name": "长椅", "x": 17, "y": 21, "type": "bench", "direction": "h"},
+    {"id": "bench_4", "name": "长椅", "x": 18, "y": 21, "type": "bench", "direction": "h"},
     # Campfire
-    {"id": "campfire", "x": 13, "y": 15, "type": "campfire"},
+    {"id": "campfire", "name": "篝火", "x": 13, "y": 15, "type": "campfire"},
 ] + _AUTO_TREES
 
 # Agent presets — 5 villagers with rich backstories

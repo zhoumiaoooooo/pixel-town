@@ -87,8 +87,10 @@ async def ws_endpoint(websocket: WebSocket):
                 tick_speed = max(1.0, float(msg.get("speed", 5.0)))
                 await broadcast({"type": "speed_changed", "speed": tick_speed})
 
-    except Exception:
-        pass
+    except Exception as e:
+        import traceback
+        print(f"[WS error] {e}")
+        traceback.print_exc()
     finally:
         connected_clients.discard(websocket)
 
