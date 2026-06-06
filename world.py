@@ -41,6 +41,21 @@ class World:
         if (sx, sy) == (gx, gy):
             return []
 
+        # If goal is not walkable (e.g. inside a building), find nearest walkable tile
+        if not self.is_walkable(gx, gy):
+            best = None
+            best_dist = 999
+            for dx in range(-3, 4):
+                for dy in range(-3, 4):
+                    nx, ny = gx + dx, gy + dy
+                    if self.is_walkable(nx, ny):
+                        d = abs(dx) + abs(dy)
+                        if d < best_dist:
+                            best_dist = d
+                            best = (nx, ny)
+            if best:
+                gx, gy = best
+
         visited = {(sx, sy)}
         parent = {}
         q = deque([(sx, sy)])

@@ -15,7 +15,7 @@ class Needs:
         self.purpose = 80 + random.uniform(-10, 10)
 
     def decay(self, dt=1.0):
-        rates = {'hunger': 3, 'social': 4, 'rest': 2, 'purpose': 1.5}
+        rates = {'hunger': 1.5, 'social': 3, 'rest': 1.5, 'purpose': 1.0}
         self.hunger = max(0, min(100, self.hunger - rates['hunger'] * dt))
         self.social = max(0, min(100, self.social - rates['social'] * dt))
         self.rest = max(0, min(100, self.rest - rates['rest'] * dt))
