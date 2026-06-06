@@ -1,4 +1,4 @@
-"""Entry point — create world, agents, and start the server."""
+"""Entry point — create world, agents, relationships, and start the server."""
 
 import asyncio
 import uvicorn
@@ -6,13 +6,12 @@ import random
 
 from config import WORLD_MAP, BUILDINGS, OBJECTS, AGENTS
 from world import World
-from agent import Agent
+from agent import Agent, Relationship
 from llm import LLMClient, MockLLMClient
 import server
 
 
 async def main():
-    # Create world
     w = World(WORLD_MAP, BUILDINGS, OBJECTS)
     server.world = w
 
@@ -28,11 +27,12 @@ async def main():
                 raise Exception("Ollama not available")
     except Exception:
         llm = MockLLMClient()
-        print("[WARN] Ollama not available, using MockLLMClient (random behavior)")
+        print("[WARN] Ollama not available, using MockLLMClient")
 
     server.llm_client = llm
 
     # Create agents
+    agent_map = {}
     for cfg in AGENTS:
         a = Agent(
             agent_id=cfg["id"],
@@ -44,17 +44,31 @@ async def main():
             backstory=cfg["backstory"],
             rng=random.Random(cfg["id"].__hash__()),
         )
-        server.agents[a.id] = a
+        agent_map[a.id] = a
         w.agents[a.id] = a
 
-    # Start agent loops as background tasks
-    for a in server.agents.values():
+    # Initialize relationships from config
+    for cfg in AGENTS:
+        a = agent_map[cfg["id"]]
+        for target_id, rel_data in cfg.get("init_relationships", {}).items():
+            target = agent_map.get(target_id)
+            if target:
+                rel = Relationship(target_id, target.name, affinity=rel_data["affinity"])
+                for tag in rel_data.get("tags", []):
+                    rel.tags.add(tag)
+                if rel_data.get("memory"):
+                    rel.shared_memories.append(rel_data["memory"])
+                a.relationships[target_id] = rel
+
+    server.agents = agent_map
+
+    # Start agent loops
+    for a in agent_map.values():
         asyncio.create_task(server.agent_loop(a, w, llm))
 
-    print(f"[OK] {len(server.agents)} agents ready")
+    print(f"[OK] {len(agent_map)} agents with relationships ready")
     print(f"[OK] Server starting at http://localhost:8000")
 
-    # Start uvicorn
     config = uvicorn.Config(server.app, host="0.0.0.0", port=8000, log_level="info")
     srv = uvicorn.Server(config)
     await srv.serve()

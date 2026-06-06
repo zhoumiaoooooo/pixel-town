@@ -3,70 +3,123 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>像素小镇 — Multi-Agent Sim</title>
+<title>像素小镇</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #1a1a2e;
+    background: #0d1117;
     display: flex; justify-content: center; align-items: center;
-    min-height: 100vh; font-family: 'Press Start 2P', monospace;
+    min-height: 100vh; font-family: 'Noto Sans SC', system-ui, sans-serif;
     overflow: hidden;
   }
-  #app {
-    display: flex; gap: 16px; align-items: stretch;
-    padding: 20px; max-width: 1300px; width: 100%;
-  }
+  #app { display: flex; gap: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 0 80px rgba(0,0,0,0.5); }
+
+  /* ---- canvas area ---- */
   #canvas-wrap {
-    position: relative;
-    border: 4px solid #3d3d5c;
-    border-radius: 4px;
-    box-shadow: 0 0 40px rgba(100,100,255,0.15);
-    flex-shrink: 0;
+    position: relative; background: #1a1a2e;
+    border-radius: 12px 0 0 12px; overflow: hidden;
   }
-  canvas {
-    display: block;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-  }
+  canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+
+  /* ---- sidebar ---- */
   #sidebar {
-    display: flex; flex-direction: column; gap: 12px;
-    width: 280px; color: #c8c8e0; font-size: 10px;
-    line-height: 1.6;
+    width: 320px; background: #161b22; color: #c9d1d9;
+    display: flex; flex-direction: column; font-size: 13px;
+    border-left: 1px solid #30363d; border-radius: 0 12px 12px 0;
   }
-  .panel {
-    background: #16213e; border: 2px solid #3d3d5c;
-    border-radius: 4px; padding: 12px; overflow: hidden;
+
+  /* tabs */
+  #tabs { display: flex; border-bottom: 1px solid #30363d; }
+  #tabs button {
+    flex: 1; padding: 12px; background: none; border: none;
+    color: #8b949e; font-size: 13px; cursor: pointer;
+    font-family: inherit; transition: all 0.2s;
+    border-bottom: 2px solid transparent;
   }
-  .panel h3 {
-    font-size: 10px; color: #ffe66d; margin-bottom: 8px;
-    border-bottom: 1px solid #3d3d5c; padding-bottom: 6px;
+  #tabs button:hover { color: #e6edf3; background: #1c2128; }
+  #tabs button.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+
+  /* panels */
+  .tab-content { display: none; flex: 1; overflow-y: auto; padding: 16px; }
+  .tab-content.active { display: flex; flex-direction: column; gap: 12px; }
+
+  /* agent detail */
+  #detail-header {
+    display: flex; align-items: center; gap: 10px; padding-bottom: 12px;
+    border-bottom: 1px solid #21262d;
   }
-  #agent-detail .name { font-size: 11px; color: #fff; }
-  #agent-detail .role { color: #888; margin-bottom: 6px; }
-  #agent-detail .trait { display: flex; justify-content: space-between; }
-  #agent-detail .bar {
-    width: 80px; height: 6px; background: #2a2a4a; border-radius: 3px; overflow: hidden;
+  #detail-emoji { font-size: 32px; }
+  #detail-name { font-size: 18px; font-weight: 700; }
+  #detail-role { color: #8b949e; font-size: 12px; }
+  #detail-emotion { font-size: 12px; color: #d2a663; margin-top: 2px; }
+  #detail-backstory { color: #8b949e; font-size: 11px; line-height: 1.6; font-style: italic; }
+
+  .section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    color: #8b949e; letter-spacing: 1px; margin-bottom: 6px;
   }
-  #agent-detail .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
-  #event-log { height: 200px; overflow-y: auto; }
-  #event-log .entry { margin-bottom: 4px; padding: 3px 0; border-bottom: 1px solid #1f1f3a; }
-  #event-log .entry .who { color: #ffe66d; }
-  #event-log .entry .txt { color: #aaa; }
-  button {
-    font-family: inherit; font-size: 9px;
-    background: #3d3d5c; color: #c8c8e0;
-    border: none; border-radius: 3px; padding: 8px 12px; cursor: pointer;
-    transition: background 0.15s;
+
+  /* needs bars */
+  .need-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .need-label { width: 32px; font-size: 11px; color: #8b949e; text-align: right; }
+  .need-bar-wrap { flex: 1; height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
+  .need-bar { height: 100%; border-radius: 4px; transition: width 0.8s; }
+  .need-val { width: 28px; font-size: 10px; color: #8b949e; text-align: right; }
+
+  /* relationships */
+  .rel-item {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+    background: #1c2128; border-radius: 6px; margin-bottom: 4px;
+    border-left: 3px solid transparent;
   }
-  button:hover { background: #4f4f7a; }
-  button.active { background: #6c5ce7; }
-  #controls { display: flex; gap: 8px; flex-wrap: wrap; }
-  #speed-label { color: #888; align-self: center; }
-  .tip { color: #555; font-size: 8px; text-align: center; margin-top: 8px; }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-thumb { background: #3d3d5c; border-radius: 2px; }
+  .rel-item.positive { border-left-color: #3fb950; }
+  .rel-item.negative { border-left-color: #f85149; }
+  .rel-item.neutral { border-left-color: #8b949e; }
+  .rel-name { font-weight: 600; font-size: 12px; }
+  .rel-affinity { font-size: 11px; margin-left: auto; }
+  .rel-tags { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 2px; }
+  .rel-tag {
+    font-size: 9px; padding: 1px 6px; border-radius: 10px;
+    background: #30363d; color: #8b949e;
+  }
+  .rel-tag.positive { background: #1b3520; color: #3fb950; }
+  .rel-tag.negative { background: #3d1f1f; color: #f85149; }
+
+  /* event log */
+  .log-entry {
+    padding: 5px 8px; border-radius: 4px; margin-bottom: 2px;
+    font-size: 11px; line-height: 1.5;
+    border-left: 3px solid #30363d;
+  }
+  .log-entry.speech { border-left-color: #58a6ff; background: #161c28; }
+  .log-entry.gossip { border-left-color: #d2a663; background: #1c1814; }
+  .log-entry.emotion { border-left-color: #f778ba; background: #1c161c; }
+  .log-entry .log-time { color: #484f58; font-size: 9px; }
+
+  /* relationship graph */
+  #rel-graph { height: 200px; position: relative; }
+  #rel-canvas { width: 100%; height: 100%; }
+
+  /* controls */
+  #controls-bar {
+    display: flex; gap: 6px; padding: 12px 16px; border-top: 1px solid #21262d;
+    align-items: center;
+  }
+  #controls-bar button {
+    padding: 6px 14px; border-radius: 6px; border: 1px solid #30363d;
+    background: #21262d; color: #c9d1d9; font-size: 12px; cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+  }
+  #controls-bar button:hover { background: #30363d; border-color: #58a6ff; }
+  #controls-bar button.active { background: #1f6feb; border-color: #58a6ff; }
+  #speed-display { font-size: 11px; color: #8b949e; margin-left: auto; }
+
+  .placeholder { color: #484f58; font-size: 12px; text-align: center; padding: 20px; }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
 </style>
 </head>
 <body>
@@ -75,144 +128,122 @@
     <canvas id="c"></canvas>
   </div>
   <div id="sidebar">
-    <div class="panel" id="agent-detail">
-      <h3>🔍 选中角色</h3>
-      <div id="detail-content" style="color:#666;">点击小镇上的角色查看详情</div>
+    <div id="tabs">
+      <button class="active" data-tab="tab-detail">角色</button>
+      <button data-tab="tab-relations">关系网</button>
+      <button data-tab="tab-log">事件</button>
     </div>
-    <div class="panel">
-      <h3>📜 事件日志</h3>
+
+    <div id="tab-detail" class="tab-content active">
+      <div id="detail-header">
+        <div id="detail-emoji">😶</div>
+        <div>
+          <div id="detail-name">点击角色</div>
+          <div id="detail-role"></div>
+          <div id="detail-emotion"></div>
+        </div>
+      </div>
+      <div id="detail-backstory"></div>
+      <div>
+        <div class="section-title">身体需求</div>
+        <div id="detail-needs"></div>
+      </div>
+      <div>
+        <div class="section-title">人际关系</div>
+        <div id="detail-relationships"></div>
+      </div>
+      <div>
+        <div class="section-title">最近记忆</div>
+        <div id="detail-memories"></div>
+      </div>
+    </div>
+
+    <div id="tab-relations" class="tab-content">
+      <div class="section-title">关系网络</div>
+      <div id="rel-graph"><canvas id="rel-canvas"></canvas></div>
+      <div id="rel-list"></div>
+    </div>
+
+    <div id="tab-log" class="tab-content">
+      <div class="section-title">事件日志</div>
       <div id="event-log"></div>
     </div>
-    <div class="panel">
-      <h3>🎮 控制</h3>
-      <div id="controls">
-        <button id="btn-pause" onclick="togglePause()">⏯ 暂停</button>
-        <button id="btn-slower" onclick="setSpeed(8)">🐢</button>
-        <button id="btn-normal" class="active" onclick="setSpeed(5)">▶</button>
-        <button id="btn-faster" onclick="setSpeed(2)">🐇</button>
-      </div>
-      <span id="speed-label">速度: 5s/tick</span>
+
+    <div id="controls-bar">
+      <button id="btn-pause" onclick="togglePause()">⏯</button>
+      <button id="btn-s1" onclick="setSpeed(8)">慢</button>
+      <button id="btn-s2" class="active" onclick="setSpeed(5)">中</button>
+      <button id="btn-s3" onclick="setSpeed(2)">快</button>
+      <span id="speed-display">5s/tick</span>
     </div>
-    <div class="tip">点击角色查看详情 | 滚轮无操作</div>
   </div>
 </div>
 
 <script>
 // ============ CONSTANTS ============
-const TILE = 24;
-const COLS = 40, ROWS = 30;
+const TILE = 24, COLS = 40, ROWS = 31;
 const W = COLS * TILE, H = ROWS * TILE;
-
 const canvas = document.getElementById('c');
-canvas.width = W;
-canvas.height = H;
+canvas.width = W; canvas.height = H;
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
-// ============ TILE RENDERING (pre-rendered) ============
+// ============ TILE CACHE ============
 const tileCache = {};
-const TILE_COLORS = { 0: '#7ec850', 1: '#4a8fcc', 2: '#9e9588', 3: '#e870a0', 4: '#8b7355' };
+const TILE_COLORS = { 0:'#7ec850', 1:'#4a8fcc', 2:'#9e9588', 3:'#5ea838', 4:'#8b7355' };
+function hash(x,y,s){ let h=(x*374761393+y*668265263+s*1274126177)>>>0; return (h%1000)/1000; }
 
 function prerenderTiles() {
-  const types = [0,1,2,3,4];
-  // Seedable pseudo-random for consistent tile variation
-  function hash(x,y,s){ let h=(x*374761393+y*668265263+s*1274126177)>>>0; return (h%1000)/1000; }
-
-  for (const t of types) {
-    const off = document.createElement('canvas');
-    off.width = off.height = TILE;
+  for (const [t,base] of Object.entries(TILE_COLORS)) {
+    const off = document.createElement('canvas'); off.width = off.height = TILE;
     const oc = off.getContext('2d');
-    const base = TILE_COLORS[t];
+    const ti = parseInt(t);
+    oc.fillStyle = base; oc.fillRect(0,0,TILE,TILE);
 
-    // Fill base
-    oc.fillStyle = base;
-    oc.fillRect(0,0,TILE,TILE);
-
-    if (t === 0) { // Grass — subtle variation + occasional flower dots
-      for (let py=0; py<TILE; py++) {
-        for (let px=0; px<TILE; px++) {
-          const v = (hash(px,py,0)-0.5)*0.25;
-          const r = parseInt(base.slice(1,3),16);
-          const g = parseInt(base.slice(3,5),16);
-          const b = parseInt(base.slice(5,7),16);
-          const rr = Math.min(255,Math.max(0,Math.floor(r*(1+v))));
-          const gg = Math.min(255,Math.max(0,Math.floor(g*(1+v*0.7))));
-          const bb = Math.min(255,Math.max(0,Math.floor(b*(1+v))));
-          oc.fillStyle = `rgb(${rr},${gg},${bb})`;
-          oc.fillRect(px,py,1,1);
-        }
+    if (ti === 0) {
+      for (let py=0; py<TILE; py++) for (let px=0; px<TILE; px++) {
+        const v=(hash(px,py,0)-0.5)*0.2;
+        const r=parseInt(base.slice(1,3),16), g=parseInt(base.slice(3,5),16), b=parseInt(base.slice(5,7),16);
+        oc.fillStyle=`rgb(${Math.min(255,Math.floor(r*(1+v)))},${Math.min(255,Math.floor(g*(1+v*0.6)))},${Math.min(255,Math.floor(b*(1+v)))})`;
+        oc.fillRect(px,py,1,1);
       }
-      // Grass blades
-      for (let i=0; i<6; i++) {
-        const gx = Math.floor(hash(i,0,1)*TILE);
-        const gy = Math.floor(hash(i,1,1)*TILE);
-        oc.fillStyle = '#5a9a38';
-        oc.fillRect(gx,gy,1,2);
-        oc.fillStyle = '#8ccf55';
-        oc.fillRect(gx,gy-2,1,2);
+      for (let i=0;i<5;i++) {
+        oc.fillStyle='#5a9a38'; oc.fillRect(Math.floor(hash(i,0,1)*TILE),Math.floor(hash(i,1,1)*TILE),1,2);
       }
-    } else if (t === 1) { // Water — wave highlights
+    } else if (ti === 1) {
       for (let py=0; py<TILE; py+=4) {
-        const offX = Math.floor(Math.sin(py*0.8)*2);
-        oc.fillStyle = 'rgba(255,255,255,0.15)';
-        oc.fillRect(4+offX,py+1,14,1);
-        oc.fillStyle = 'rgba(100,180,255,0.2)';
-        oc.fillRect(6-offX,py+2,10,1);
+        const ox=Math.floor(Math.sin(py*0.8)*2);
+        oc.fillStyle='rgba(255,255,255,0.12)'; oc.fillRect(4+ox,py+1,14,1);
       }
-      // Edge darkening
-      oc.fillStyle = 'rgba(0,0,0,0.1)';
-      oc.fillRect(0,0,TILE,3);
-      oc.fillRect(0,TILE-3,TILE,3);
-    } else if (t === 2) { // Stone — speckles
-      for (let i=0; i<20; i++) {
-        const sx = Math.floor(hash(i,2,2)*TILE);
-        const sy = Math.floor(hash(i,3,2)*TILE);
-        const bright = hash(i,4,2) > 0.5;
-        oc.fillStyle = bright ? '#b0a898' : '#8a7e70';
-        oc.fillRect(sx,sy,2,2);
+    } else if (ti === 2) {
+      for (let i=0;i<18;i++) {
+        oc.fillStyle=hash(i,2,2)>0.5?'#b0a898':'#8a7e70';
+        oc.fillRect(Math.floor(hash(i,3,2)*TILE),Math.floor(hash(i,4,2)*TILE),2,2);
       }
-    } else if (t === 3) { // Flowers — on green base with colorful dots
-      oc.fillStyle = '#5ea838';
-      oc.fillRect(0,0,TILE,TILE);
-      for (let i=0; i<8; i++) {
-        const fx = Math.floor(hash(i,5,3)*TILE);
-        const fy = Math.floor(hash(i,6,3)*TILE);
-        const colors = ['#ff6b9d','#ffe66d','#ffffff','#ff9f43','#e056a0'];
-        oc.fillStyle = colors[i % colors.length];
-        oc.fillRect(fx,fy,2,2);
-        oc.fillStyle = '#ffe66d';
-        oc.fillRect(fx+1,fy-1,1,1);
+    } else if (ti === 3) {
+      oc.fillStyle='#5ea838'; oc.fillRect(0,0,TILE,TILE);
+      const fc=['#ff6b9d','#ffe66d','#fff','#ff9f43','#e056a0'];
+      for (let i=0;i<8;i++) {
+        oc.fillStyle=fc[i%5]; oc.fillRect(Math.floor(hash(i,5,3)*TILE),Math.floor(hash(i,6,3)*TILE),2,2);
       }
-    } else if (t === 4) { // Bridge — wood planks
+    } else if (ti === 4) {
       for (let py=0; py<TILE; py+=6) {
-        oc.fillStyle = '#7a6548';
-        oc.fillRect(0,py,TILE,4);
-        oc.fillStyle = '#9a8568';
-        oc.fillRect(0,py,2,4);
-        oc.fillRect(TILE-2,py,2,4);
-        // Plank lines
-        oc.fillStyle = '#6a5538';
-        for (let px=3; px<TILE-3; px+=5) {
-          oc.fillRect(px,py,1,4);
-        }
+        oc.fillStyle='#7a6548'; oc.fillRect(0,py,TILE,4);
+        oc.fillStyle='#9a8568'; oc.fillRect(0,py,2,4); oc.fillRect(TILE-2,py,2,4);
+        for (let px=3; px<TILE-3; px+=5) oc.fillRect(px,py,1,4);
       }
     }
-    tileCache[t] = off;
+    tileCache[ti] = off;
   }
 }
 prerenderTiles();
 
-// ============ WORLD STATE ============
-let worldMap = [];
-let buildings = [];
-let objects = [];
-let agentStates = {};  // id -> {x,y,displayX,displayY,targetX,targetY,color,name,role,personality,...}
-let speechBubbles = []; // [{agentId, text, x, y, life}]
-let particles = [];
-let paused = false;
-let tickSpeed = 5;
-let selectedAgentId = null;
-let lastFrameTime = performance.now();
+// ============ STATE ============
+let worldMap=[], buildings=[], objects=[];
+let agentStates={}, speechBubbles=[], particles=[];
+let paused=false, tickSpeed=5, selectedAgentId=null;
+let lastFrameTime=performance.now();
+let eventLog=[], lastDetailAgent=null;
 
 // ============ WEBSOCKET ============
 const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -222,457 +253,418 @@ ws.onmessage = (e) => {
   const msg = JSON.parse(e.data);
   switch (msg.type) {
     case 'world_init':
-      worldMap = msg.map;
-      buildings = msg.buildings;
-      objects = msg.objects;
-      paused = msg.paused;
-      tickSpeed = msg.tick_speed;
+      worldMap=msg.map; buildings=msg.buildings; objects=msg.objects;
+      paused=msg.paused; tickSpeed=msg.tick_speed;
       for (const a of msg.agents) {
         agentStates[a.id] = {
-          ...a,
-          displayX: a.x * TILE, displayY: a.y * TILE,
-          targetX: a.x * TILE, targetY: a.y * TILE,
+          ...a, displayX:a.x*TILE, displayY:a.y*TILE,
+          targetX:a.x*TILE, targetY:a.y*TILE,
+          emoji:a.emotion?.emoji||'😶', emotion:a.emotion,
+          needs:a.needs, relationships:a.relationships, gossip:a.gossip_heard,
         };
       }
-      updateSpeedUI();
-      break;
+      updateSpeedUI(); break;
+
     case 'agent_update':
       if (agentStates[msg.agent_id]) {
-        const a = agentStates[msg.agent_id];
-        a.targetX = msg.x * TILE;
-        a.targetY = msg.y * TILE;
-        a.thought = msg.thought || '';
-        a.x = msg.x; a.y = msg.y;
+        const a=agentStates[msg.agent_id];
+        a.targetX=msg.x*TILE; a.targetY=msg.y*TILE;
+        a.x=msg.x; a.y=msg.y;
+        if (msg.emoji) a.emoji=msg.emoji;
+        if (msg.emotion) a.emotion=msg.emotion;
+        if (msg.needs) a.needs=msg.needs;
       }
       break;
+
     case 'speech':
       if (agentStates[msg.agent_id]) {
-        const a = agentStates[msg.agent_id];
-        speechBubbles.push({
-          agentId: msg.agent_id,
-          text: msg.text,
-          x: a.displayX, y: a.displayY - 16,
-          life: 120, // frames (~2 sec at 60fps)
-        });
-        addLog(msg.agent_name, `💬 对 ${msg.target || '...'} 说: "${msg.text}"`, msg.color);
-        // sparkle particles
-        for (let i=0; i<5; i++) {
-          particles.push({
-            x: a.displayX + Math.random()*TILE*2, y: a.displayY,
-            vx: (Math.random()-0.5)*2, vy: -(Math.random()*3+1),
-            life: 30 + Math.random()*20, color: '#ffe66d',
-          });
+        const a=agentStates[msg.agent_id];
+        a.emoji=msg.emoji||a.emoji;
+        a.emotion=msg.emotion||a.emotion;
+        speechBubbles.push({agentId:msg.agent_id, text:msg.text, x:a.displayX, y:a.displayY-16, life:140});
+        addLog(msg.agent_name, msg.text, 'speech', msg.color);
+        if (msg.gossip_about) {
+          addLog(msg.agent_name, `🗣 八卦了 ${msg.gossip_about}`, 'gossip', msg.color);
         }
+        if (msg.gossip_event) {
+          const g=msg.gossip_event;
+          addLog('📢 流言', `${g.speaker} 聊到 ${g.about_name}: ${g.text.slice(0,30)}`, 'gossip', '#d2a663');
+        }
+        for (let i=0;i<6;i++) particles.push({
+          x:a.displayX+Math.random()*TILE*2, y:a.displayY,
+          vx:(Math.random()-0.5)*2, vy:-(Math.random()*3+1), life:25+Math.random()*25, color:'#58a6ff',
+        });
       }
       break;
+
     case 'interaction':
       if (agentStates[msg.agent_id]) {
-        addLog(msg.agent_name, `🔧 在 ${msg.target || '...'} 互动`, msg.color);
-        const a = agentStates[msg.agent_id];
-        for (let i=0; i<3; i++) {
-          particles.push({
-            x: a.displayX + TILE, y: a.displayY + TILE/2,
-            vx: (Math.random()-0.5)*1.5, vy: -(Math.random()*2+0.5),
-            life: 20 + Math.random()*15, color: '#ffffff',
-          });
-        }
+        const a=agentStates[msg.agent_id];
+        a.emoji=msg.emoji||a.emoji;
+        a.emotion=msg.emotion||a.emotion;
+        addLog(msg.agent_name, `📍 ${msg.target||'...'}`, 'emotion', msg.color);
+        for (let i=0;i<4;i++) particles.push({
+          x:a.displayX+TILE, y:a.displayY+TILE/2,
+          vx:(Math.random()-0.5)*1.5, vy:-(Math.random()*2+0.5), life:20+Math.random()*15, color:'#fff',
+        });
       }
       break;
+
     case 'agent_idle':
       if (agentStates[msg.agent_id]) {
-        agentStates[msg.agent_id].thought = msg.thought || '';
+        const a=agentStates[msg.agent_id];
+        if (msg.emoji) a.emoji=msg.emoji;
+        if (msg.emotion) a.emotion=msg.emotion;
+        if (msg.needs) a.needs=msg.needs;
       }
       break;
+
     case 'agent_detail':
+      lastDetailAgent=msg.agent;
       showDetail(msg.agent);
+      drawRelationGraph(msg.agent);
       break;
-    case 'pause_state':
-      paused = msg.paused;
-      updatePauseUI();
-      break;
-    case 'speed_changed':
-      tickSpeed = msg.speed;
-      updateSpeedUI();
-      break;
+
+    case 'pause_state': paused=msg.paused; updatePauseUI(); break;
+    case 'speed_changed': tickSpeed=msg.speed; updateSpeedUI(); break;
   }
 };
 
-ws.onclose = () => { addLog('系统', '⚠ 连接断开，刷新页面重连', '#ff6b6b'); };
-ws.onerror = () => { addLog('系统', '⚠ 连接错误', '#ff6b6b'); };
+ws.onclose=()=>addLog('系统','连接断开','speech','#f85149');
+ws.onerror=()=>addLog('系统','连接错误','speech','#f85149');
 
 // ============ LOG ============
-function addLog(who, text, color) {
-  const el = document.getElementById('event-log');
-  const div = document.createElement('div');
-  div.className = 'entry';
-  div.innerHTML = `<span class="who" style="color:${color||'#ffe66d'}">${who}</span> <span class="txt">${text}</span>`;
-  el.prepend(div);
-  if (el.children.length > 50) el.removeChild(el.lastChild);
+function addLog(who, text, cls, color) {
+  const now=new Date();
+  const time=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  eventLog.unshift({who,text,cls,color,time});
+  if (eventLog.length>100) eventLog.length=100;
+  renderLog();
+}
+function renderLog() {
+  const el=document.getElementById('event-log');
+  el.innerHTML=eventLog.slice(0,40).map(e=>
+    `<div class="log-entry ${e.cls}"><span class="log-time">${e.time}</span> <b style="color:${e.color||'#58a6ff'}">${e.who}</b> ${e.text}</div>`
+  ).join('');
 }
 
 // ============ DETAIL PANEL ============
 function showDetail(agent) {
-  selectedAgentId = agent.id;
-  const traits = ['开放性','尽责性','外向性','宜人性','神经质'];
-  const keys = ['O','C','E','A','N'];
-  let html = `<div class="name" style="color:${agent.color}">${agent.name}</div>`;
-  html += `<div class="role">${agent.role}</div>`;
-  for (let i=0; i<traits.length; i++) {
-    const v = agent.personality[keys[i]];
-    html += `<div class="trait"><span>${traits[i]}</span>`;
-    html += `<div class="bar"><div class="bar-fill" style="width:${v*100}%;background:${v>0.7?'#6c5ce7':v>0.4?'#4ecdc4':'#ff6b6b'}"></div></div></div>`;
+  selectedAgentId=agent.id;
+  document.getElementById('detail-emoji').textContent=agent.emotion?.emoji||'😶';
+  document.getElementById('detail-name').textContent=agent.name;
+  document.getElementById('detail-name').style.color=agent.color;
+  document.getElementById('detail-role').textContent=agent.role;
+  document.getElementById('detail-emotion').textContent=agent.emotion
+    ? `${agent.emotion.type}(${agent.emotion.intensity?.toFixed(1)}/10)`
+    : '';
+  document.getElementById('detail-backstory').textContent=agent.backstory||'';
+
+  // Needs bars
+  const needs=agent.needs||{};
+  const needDefs=[
+    {key:'hunger',label:'🍞',color:'#f0883e'},
+    {key:'social',label:'💬',color:'#58a6ff'},
+    {key:'rest',label:'💤',color:'#3fb950'},
+    {key:'purpose',label:'⭐',color:'#d2a663'},
+  ];
+  document.getElementById('detail-needs').innerHTML=needDefs.map(n=>{
+    const v=needs[n.key]||50;
+    return `<div class="need-row"><span class="need-label">${n.label}</span>
+      <div class="need-bar-wrap"><div class="need-bar" style="width:${v}%;background:${n.color}"></div></div>
+      <span class="need-val">${Math.round(v)}</span></div>`;
+  }).join('');
+
+  // Relationships
+  const rels=agent.relationships||{};
+  const relEntries=Object.entries(rels);
+  if (relEntries.length) {
+    document.getElementById('detail-relationships').innerHTML=relEntries.map(([id,r])=>{
+      const cls=r.affinity>1?'positive':r.affinity<-1?'negative':'neutral';
+      const sign=r.affinity>=0?'+':'';
+      return `<div class="rel-item ${cls}">
+        <span class="rel-name">${r.name}</span>
+        <span class="rel-affinity" style="color:${r.affinity>0?'#3fb950':r.affinity<0?'#f85149':'#8b949e'}">${sign}${r.affinity.toFixed(1)}</span>
+        ${(r.tags||[]).map(t=>`<span class="rel-tag ${r.affinity>0?'positive':'negative'}">${t}</span>`).join('')}
+      </div>`;
+    }).join('');
+  } else {
+    document.getElementById('detail-relationships').innerHTML='<div class="placeholder">还没有建立关系</div>';
   }
-  html += `<div style="margin-top:6px;color:#888;">目标: ${agent.current_goal||'无'}</div>`;
-  if (agent.memory && agent.memory.length) {
-    html += `<div style="margin-top:6px;color:#666;">最近记忆:</div>`;
-    for (const m of agent.memory.slice(-3)) {
-      html += `<div style="color:#555;font-size:8px;">· ${m}</div>`;
-    }
-  }
-  html += `<div style="margin-top:6px;color:#666;">背景: ${agent.backstory||''}</div>`;
-  document.getElementById('detail-content').innerHTML = html;
+
+  // Memories
+  const mems=agent.memory||[];
+  document.getElementById('detail-memories').innerHTML=mems.length
+    ? mems.slice(-5).reverse().map(m=>`<div style="font-size:11px;color:#8b949e;padding:2px 0;">· ${m}</div>`).join('')
+    : '<div class="placeholder">暂无记忆</div>';
 }
 
+function drawRelationGraph(agent) {
+  const c=document.getElementById('rel-canvas');
+  const wrap=document.getElementById('rel-graph');
+  c.width=wrap.clientWidth; c.height=wrap.clientHeight;
+  const rctx=c.getContext('2d');
+  rctx.clearRect(0,0,c.width,c.height);
+
+  const rels=agent.relationships||{};
+  const entries=Object.entries(rels);
+  if (!entries.length) return;
+
+  const cx=c.width/2, cy=30;
+  // Center node: selected agent
+  rctx.fillStyle=agent.color; rctx.beginPath(); rctx.arc(cx,cy,12,0,Math.PI*2); rctx.fill();
+  rctx.fillStyle='#fff'; rctx.font='9px "Noto Sans SC"'; rctx.textAlign='center';
+  rctx.fillText(agent.name,cx,cy+22);
+
+  // Relationship nodes around center
+  const angleStep=(Math.PI*2)/entries.length;
+  entries.forEach(([id,r],i)=>{
+    const angle=-Math.PI/2+angleStep*i;
+    const nx=cx+Math.cos(angle)*90;
+    const ny=cy+Math.sin(angle)*90+60;
+
+    // Line
+    const absAff=Math.abs(r.affinity);
+    const lw=1+absAff*0.8;
+    const isPos=r.affinity>0;
+    rctx.strokeStyle=isPos?`rgba(63,185,80,${0.3+absAff*0.07})`:`rgba(248,81,73,${0.3+absAff*0.07})`;
+    rctx.lineWidth=lw;
+    rctx.setLineDash([4,3]);
+    rctx.beginPath(); rctx.moveTo(cx,cy); rctx.lineTo(nx,ny); rctx.stroke();
+    rctx.setLineDash([]);
+
+    // Node
+    const otherAgent=Object.values(agentStates).find(a=>a.id===id);
+    const nodeColor=otherAgent?otherAgent.color:'#8b949e';
+    rctx.fillStyle=nodeColor; rctx.beginPath(); rctx.arc(nx,ny,8,0,Math.PI*2); rctx.fill();
+    rctx.fillStyle='#fff'; rctx.font='8px "Noto Sans SC"';
+    rctx.fillText(r.name,nx,ny+16);
+  });
+
+  // Rel list below graph
+  document.getElementById('rel-list').innerHTML=entries.map(([id,r])=>{
+    const cls=r.affinity>1?'positive':r.affinity<-1?'negative':'neutral';
+    return `<div class="rel-item ${cls}">
+      <span class="rel-name">${r.name}</span>
+      <span class="rel-affinity" style="color:${r.affinity>0?'#3fb950':'#f85149'}">${r.affinity>0?'+':''}${r.affinity.toFixed(1)}</span>
+      <div class="rel-tags">${(r.tags||[]).map(t=>`<span class="rel-tag ${r.affinity>0?'positive':'negative'}">${t}</span>`).join('')}</div>
+      ${(r.memories||[]).slice(-2).map(m=>`<div style="font-size:10px;color:#484f58;margin-top:2px;">"${m}"</div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ============ TABS ============
+document.querySelectorAll('#tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab==='tab-relations' && lastDetailAgent) drawRelationGraph(lastDetailAgent);
+  });
+});
+
 // ============ CONTROLS ============
-function togglePause() {
-  ws.send(JSON.stringify({type:'toggle_pause'}));
+function togglePause(){ ws.send(JSON.stringify({type:'toggle_pause'})); }
+function setSpeed(s){ ws.send(JSON.stringify({type:'set_speed',speed:s})); }
+function updatePauseUI(){
+  document.getElementById('btn-pause').textContent=paused?'▶':'⏯';
 }
-function setSpeed(s) {
-  ws.send(JSON.stringify({type:'set_speed', speed: s}));
-}
-function updatePauseUI() {
-  const btn = document.getElementById('btn-pause');
-  btn.textContent = paused ? '▶ 播放' : '⏯ 暂停';
-}
-function updateSpeedUI() {
-  document.getElementById('speed-label').textContent = `速度: ${tickSpeed}s/tick`;
-  ['btn-slower','btn-normal','btn-faster'].forEach(id=>document.getElementById(id).classList.remove('active'));
-  if (tickSpeed >= 7) document.getElementById('btn-slower').classList.add('active');
-  else if (tickSpeed <= 3) document.getElementById('btn-faster').classList.add('active');
-  else document.getElementById('btn-normal').classList.add('active');
+function updateSpeedUI(){
+  document.getElementById('speed-display').textContent=`${tickSpeed}s/tick`;
+  ['btn-s1','btn-s2','btn-s3'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  if (tickSpeed>=7) document.getElementById('btn-s1').classList.add('active');
+  else if (tickSpeed<=3) document.getElementById('btn-s3').classList.add('active');
+  else document.getElementById('btn-s2').classList.add('active');
 }
 
 // ============ CANVAS CLICK ============
-canvas.addEventListener('click', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const mx = (e.clientX - rect.left) * (W / rect.width);
-  const my = (e.clientY - rect.top) * (H / rect.height);
-
-  // Check if clicked on an agent
-  for (const [id, a] of Object.entries(agentStates)) {
-    const ax = a.displayX;
-    const ay = a.displayY;
-    if (mx >= ax && mx <= ax + TILE*2 && my >= ay && my <= ay + TILE*2) {
-      ws.send(JSON.stringify({type:'click_agent', agent_id: id}));
+canvas.addEventListener('click',(e)=>{
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(W/rect.width);
+  const my=(e.clientY-rect.top)*(H/rect.height);
+  for (const [id,a] of Object.entries(agentStates)) {
+    if (mx>=a.displayX && mx<=a.displayX+TILE*2 && my>=a.displayY && my<=a.displayY+TILE*2) {
+      ws.send(JSON.stringify({type:'click_agent',agent_id:id}));
+      document.querySelector('#tabs button[data-tab="tab-detail"]').click();
       return;
     }
   }
-  selectedAgentId = null;
-  document.getElementById('detail-content').innerHTML = '<span style="color:#666;">点击小镇上的角色查看详情</span>';
 });
 
-// ============ RENDER LOOP ============
-function drawBuilding(b) {
-  const bx = b.x * TILE, by = b.y * TILE;
-  const bw = b.w * TILE, bh = b.h * TILE;
-  const color = b.color || '#d4845a';
-  const roof = b.roof || '#b8402c';
+// ============ RENDER ============
+function lerp(a,b,t){return a+(b-a)*t;}
 
+function drawBuilding(b) {
+  const bx=b.x*TILE, by=b.y*TILE, bw=b.w*TILE, bh=b.h*TILE;
+  const color=b.color||'#d4845a', roof=b.roof||'#b8402c';
+  // Wall shadow
+  ctx.fillStyle='rgba(0,0,0,0.15)'; ctx.fillRect(bx+2,by+TILE/2+2,bw,bh-TILE/2);
   // Wall
-  ctx.fillStyle = color;
-  ctx.fillRect(bx, by + TILE/2, bw, bh - TILE/2);
-  // Wall texture
-  ctx.fillStyle = 'rgba(0,0,0,0.1)';
-  for (let ly = by + TILE/2; ly < by + bh; ly += 8) {
-    ctx.fillRect(bx, ly, bw, 2);
-  }
-  for (let lx = bx + TILE/2; lx < bx + bw; lx += 8) {
-    ctx.fillRect(lx, by + TILE/2, 2, bh - TILE/2);
-  }
+  ctx.fillStyle=color; ctx.fillRect(bx,by+TILE/2,bw,bh-TILE/2);
+  ctx.fillStyle='rgba(0,0,0,0.08)';
+  for (let ly=by+TILE/2;ly<by+bh;ly+=8) ctx.fillRect(bx,ly,bw,1);
   // Roof
-  ctx.fillStyle = roof;
-  ctx.beginPath();
-  ctx.moveTo(bx - 4, by + TILE/2);
-  ctx.lineTo(bx + bw/2, by - 6);
-  ctx.lineTo(bx + bw + 4, by + TILE/2);
-  ctx.closePath();
-  ctx.fill();
-  // Roof highlight
-  ctx.fillStyle = 'rgba(255,255,255,0.1)';
-  ctx.beginPath();
-  ctx.moveTo(bx + bw/2 - 4, by + TILE/2 - 2);
-  ctx.lineTo(bx + bw/2, by - 4);
-  ctx.lineTo(bx + bw/2 + 4, by + TILE/2 - 2);
-  ctx.closePath();
-  ctx.fill();
-  // Window (if house)
-  if (b.id && b.id.startsWith('house')) {
-    ctx.fillStyle = '#ffe66d';
-    ctx.fillRect(bx + bw/2 - 4, by + TILE/2 + 4, 8, 8);
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillRect(bx + bw/2, by + TILE/2 + 4, 2, 8);
-    ctx.fillRect(bx + bw/2 - 4, by + TILE/2 + 8, 8, 2);
-    // Window glow
-    ctx.fillStyle = 'rgba(255,230,100,0.3)';
-    ctx.fillRect(bx + bw/2 - 6, by + TILE/2 + 2, 12, 12);
+  ctx.fillStyle=roof; ctx.beginPath();
+  ctx.moveTo(bx-4,by+TILE/2); ctx.lineTo(bx+bw/2,by-6); ctx.lineTo(bx+bw+4,by+TILE/2);
+  ctx.closePath(); ctx.fill();
+  // Window
+  if (b.id&&b.id.startsWith('house')) {
+    ctx.fillStyle='#ffe66d'; ctx.fillRect(bx+bw/2-5,by+TILE/2+5,10,10);
+    ctx.fillStyle='rgba(0,0,0,0.25)';
+    ctx.fillRect(bx+bw/2,by+TILE/2+5,2,10);
+    ctx.fillRect(bx+bw/2-5,by+TILE/2+10,10,2);
+    ctx.fillStyle='rgba(255,230,100,0.25)'; ctx.fillRect(bx+bw/2-7,by+TILE/2+3,14,14);
   }
-  // Market stall has open front
-  if (b.id === 'market') {
-    ctx.fillStyle = color;
-    ctx.fillRect(bx, by + TILE, bw, bh - TILE);
-    // Awning
-    ctx.fillStyle = '#e8a040';
-    for (let ax = bx + 4; ax < bx + bw - 4; ax += 12) {
-      ctx.beginPath();
-      ctx.moveTo(ax, by + TILE);
-      ctx.lineTo(ax + 6, by + 4);
-      ctx.lineTo(ax + 12, by + TILE);
-      ctx.fill();
+  if (b.id==='market') {
+    ctx.fillStyle=color; ctx.fillRect(bx,by+TILE,bw,bh-TILE);
+    ctx.fillStyle='#e8a040';
+    for (let ax=bx+4;ax<bx+bw-4;ax+=12) {
+      ctx.beginPath(); ctx.moveTo(ax,by+TILE); ctx.lineTo(ax+6,by+4); ctx.lineTo(ax+12,by+TILE); ctx.fill();
     }
-    // Goods on display
-    const goods = ['#ff6b6b','#4ecdc4','#ffe66d','#a29bfe'];
-    goods.forEach((c,i) => {
-      ctx.fillStyle = c;
-      ctx.fillRect(bx + 8 + i*14, by + bh - 10, 6, 6);
+    ['#ff6b6b','#4ecdc4','#ffe66d','#a29bfe'].forEach((cl,i)=>{
+      ctx.fillStyle=cl; ctx.fillRect(bx+8+i*14,by+bh-10,6,6);
     });
   }
 }
 
 function drawObject(obj) {
-  const ox = obj.x * TILE, oy = obj.y * TILE;
-
-  if (obj.type === 'bench') {
-    // Simple pixel bench
-    ctx.fillStyle = '#8b6914';
-    ctx.fillRect(ox + 2, oy + 16, 20, 6); // seat
-    ctx.fillRect(ox + 3, oy + 22, 4, 6);  // left leg
-    ctx.fillRect(ox + 17, oy + 22, 4, 6); // right leg
-    ctx.fillStyle = '#a07818';
-    ctx.fillRect(ox, oy + 14, 24, 3);    // backrest
-  } else if (obj.type === 'campfire') {
-    // Animated campfire (flicker)
-    const flicker = Math.sin(performance.now()*0.01) * 2;
-    ctx.fillStyle = '#666';
-    ctx.fillRect(ox + 2, oy + 20, 20, 4); // base stones
-    ctx.fillRect(ox, oy + 22, 24, 4);
-    // Fire
-    const colors = ['#ff4500','#ff6347','#ff7f50','#ffd700'];
-    colors.forEach((c,i) => {
-      ctx.fillStyle = c;
-      const h = 5 + i*3 + (i%2===0?flicker:-flicker);
-      ctx.beginPath();
-      ctx.arc(ox + 12, oy + 16 - i*2, 4 + i, 0, Math.PI*2);
-      ctx.fill();
+  const ox=obj.x*TILE, oy=obj.y*TILE;
+  if (obj.type==='bench') {
+    ctx.fillStyle='#6b4c2a'; ctx.fillRect(ox+2,oy+16,20,6);
+    ctx.fillRect(ox+3,oy+22,5,4); ctx.fillRect(ox+16,oy+22,5,4);
+    ctx.fillStyle='#8b6338'; ctx.fillRect(ox,oy+14,24,3);
+  } else if (obj.type==='campfire') {
+    const flicker=Math.sin(performance.now()*0.008)*2;
+    ctx.fillStyle='#555'; ctx.fillRect(ox+3,oy+19,18,5);
+    ['#ff4500','#ff6347','#ff7f50','#ffd700'].forEach((cl,i)=>{
+      ctx.fillStyle=cl;
+      ctx.beginPath(); ctx.arc(ox+12,oy+15-i*2,3+i+(i%2?flicker:-flicker)*0.3,0,Math.PI*2); ctx.fill();
     });
-    // Sparks
-    if (Math.random() < 0.3) {
-      particles.push({
-        x: ox + 8 + Math.random()*8, y: oy + 8,
-        vx: (Math.random()-0.5)*1, vy: -(Math.random()*2+1),
-        life: 15 + Math.random()*20,
-        color: Math.random()>0.5?'#ffd700':'#ff4500',
-      });
-    }
-  } else if (obj.type === 'tree') {
-    // Pixel tree
-    ctx.fillStyle = '#6b4226';
-    ctx.fillRect(ox + 8, oy + 14, 8, 10); // trunk
-    ctx.fillStyle = '#3d6b2e';
-    ctx.beginPath(); ctx.arc(ox + 12, oy + 10, 12, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#4a8c3a';
-    ctx.beginPath(); ctx.arc(ox + 6, oy + 6, 8, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(ox + 18, oy + 7, 8, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#5aaa44';
-    ctx.beginPath(); ctx.arc(ox + 12, oy + 2, 7, 0, Math.PI*2); ctx.fill();
-  } else if (obj.type === 'well') {
-    // Well — small pixel art
-    ctx.fillStyle = '#7a7a72';
-    ctx.fillRect(ox + 4, oy + 8, 16, 16);
-    ctx.fillStyle = '#5a5a52';
-    ctx.fillRect(ox + 2, oy + 6, 20, 4);  // top rim
-    ctx.fillRect(ox + 6, oy + 22, 12, 4); // base
-    ctx.fillStyle = '#4a6fcc';
-    ctx.fillRect(ox + 8, oy + 10, 8, 8);  // water visible
-    // Roof
-    ctx.fillStyle = '#8b5a3a';
-    ctx.beginPath();
-    ctx.moveTo(ox, oy + 8); ctx.lineTo(ox + 12, oy - 2); ctx.lineTo(ox + 24, oy + 8);
-    ctx.closePath(); ctx.fill();
-    // Support posts
-    ctx.fillStyle = '#6b4226';
-    ctx.fillRect(ox + 2, oy + 6, 2, 8);
-    ctx.fillRect(ox + 20, oy + 6, 2, 8);
+    if (Math.random()<0.4) particles.push({
+      x:ox+8+Math.random()*8, y:oy+8,
+      vx:(Math.random()-0.5)*0.8, vy:-(Math.random()*2+1),
+      life:12+Math.random()*18, color:Math.random()>0.5?'#ffd700':'#ff4500',
+    });
+  } else if (obj.type==='tree') {
+    ctx.fillStyle='#5a3a1a'; ctx.fillRect(ox+9,oy+14,6,10);
+    ctx.fillStyle='#2d5a1e';
+    [{x:12,y:8,r:12},{x:4,y:5,r:9},{x:20,y:6,r:9},{x:12,y:0,r:8}].forEach(c=>{
+      ctx.beginPath(); ctx.arc(ox+c.x,oy+c.y,c.r,0,Math.PI*2); ctx.fill();
+    });
+    ctx.fillStyle='#3d7a2e';
+    [{x:8,y:3,r:6},{x:16,y:4,r:6}].forEach(c=>{
+      ctx.beginPath(); ctx.arc(ox+c.x,oy+c.y,c.r,0,Math.PI*2); ctx.fill();
+    });
   }
 }
 
 function drawAgentSprite(agent, x, y) {
-  // Simple pixel character — 12x16 on 24x24 tile
-  const cx = x + 6; // center offset
-  const cy = y + 4;
-  const c = agent.color;
-  const darken = (hex, amt) => {
-    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-    return `rgb(${Math.floor(r*amt)},${Math.floor(g*amt)},${Math.floor(b*amt)})`;
-  };
+  const cx=x+6, cy=y+4, c=agent.color;
+  const darken=(h,amt)=>{const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgb(${Math.floor(r*amt)},${Math.floor(g*amt)},${Math.floor(b*amt)})`;};
 
   // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.2)';
-  ctx.fillRect(cx + 1, y + 18, 10, 2);
+  ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.fillRect(cx+1,y+19,10,2);
 
-  // Legs (small bounce animation)
-  const bounce = Math.sin(performance.now()*0.005 + agent.id.charCodeAt(0)) * 0.5;
-  ctx.fillStyle = darken(c, 0.5);
-  ctx.fillRect(cx + 2, cy + 12 + bounce, 3, 6);
-  ctx.fillRect(cx + 7, cy + 12 - bounce, 3, 6);
-
+  const bounce=Math.sin(performance.now()*0.004+agent.id.charCodeAt(0))*0.5;
+  // Legs
+  ctx.fillStyle=darken(c,0.4); ctx.fillRect(cx+2,cy+12+bounce,3,6); ctx.fillRect(cx+7,cy+12-bounce,3,6);
   // Body
-  ctx.fillStyle = c;
-  ctx.fillRect(cx + 1, cy + 6, 10, 8);
-
+  ctx.fillStyle=c; ctx.fillRect(cx+1,cy+6,10,8);
   // Arms
-  ctx.fillRect(cx - 1, cy + 7, 2, 4);
-  ctx.fillRect(cx + 11, cy + 7, 2, 4);
-
+  ctx.fillRect(cx-1,cy+7,2,4); ctx.fillRect(cx+11,cy+7,2,4);
   // Head
-  ctx.fillStyle = '#ffd8b1'; // skin
-  ctx.fillRect(cx + 2, cy, 8, 8);
-
+  ctx.fillStyle='#f4c7a8'; ctx.fillRect(cx+2,cy,8,8);
   // Hair
-  ctx.fillStyle = darken(c, 0.6);
-  ctx.fillRect(cx + 1, cy - 1, 10, 3);
-  ctx.fillRect(cx + 1, cy, 2, 4);
-  ctx.fillRect(cx + 9, cy, 2, 4);
-
+  ctx.fillStyle=darken(c,0.5); ctx.fillRect(cx+1,cy-1,10,3); ctx.fillRect(cx+1,cy,2,4); ctx.fillRect(cx+9,cy,2,4);
   // Eyes
-  ctx.fillStyle = '#000';
-  ctx.fillRect(cx + 4, cy + 3, 2, 2);
-  ctx.fillRect(cx + 8, cy + 3, 2, 2);
+  ctx.fillStyle='#111'; ctx.fillRect(cx+4,cy+3,2,2); ctx.fillRect(cx+8,cy+3,2,2);
 
   // Selection highlight
-  if (agent.id === selectedAgentId) {
-    ctx.strokeStyle = '#ffe66d';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x - 1, y - 1, TILE*2 + 2, TILE*2 + 2);
-    // Pulse
-    const pulse = Math.sin(performance.now()*0.005) * 0.3 + 0.7;
-    ctx.strokeStyle = `rgba(255,230,100,${pulse})`;
-    ctx.strokeRect(x - 3, y - 3, TILE*2 + 6, TILE*2 + 6);
+  if (agent.id===selectedAgentId) {
+    const pulse=Math.sin(performance.now()*0.004)*0.3+0.7;
+    ctx.strokeStyle=`rgba(88,166,255,${pulse})`; ctx.lineWidth=2;
+    ctx.strokeRect(x-2,y-2,TILE*2+4,TILE*2+6);
   }
 }
 
-function lerp(a, b, t) { return a + (b - a) * t; }
+function drawEmoji(agent, x, y) {
+  const emoji=agent.emoji||'😶';
+  ctx.font='14px sans-serif'; ctx.textAlign='center';
+  // Floating animation
+  const float=Math.sin(performance.now()*0.003+agent.id.charCodeAt(0))*2;
+  ctx.fillText(emoji, x+TILE, y-4+float);
+  ctx.textAlign='start';
+}
 
 function render(now) {
   requestAnimationFrame(render);
+  const dt=Math.min((now-lastFrameTime)/1000,0.1);
+  lastFrameTime=now;
 
-  const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
-  lastFrameTime = now;
+  // Sky gradient
+  const skyGrad=ctx.createLinearGradient(0,0,0,H);
+  skyGrad.addColorStop(0,'#87ceeb'); skyGrad.addColorStop(1,'#e0f0e8');
+  ctx.fillStyle=skyGrad; ctx.fillRect(0,0,W,H);
 
-  // Clear
-  ctx.fillStyle = '#1a1a2e';
-  ctx.fillRect(0, 0, W, H);
-
-  // Draw tiles
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      const t = (worldMap[row] && worldMap[row][col] !== undefined) ? worldMap[row][col] : 0;
-      if (tileCache[t]) {
-        ctx.drawImage(tileCache[t], col * TILE, row * TILE);
-      }
-    }
+  // Tiles
+  for (let row=0;row<ROWS;row++) for (let col=0;col<COLS;col++) {
+    const t=(worldMap[row]&&worldMap[row][col]!==undefined)?worldMap[row][col]:0;
+    if (tileCache[t]) ctx.drawImage(tileCache[t],col*TILE,row*TILE);
   }
 
-  // Draw buildings
-  for (const b of buildings) {
-    drawBuilding(b);
+  // Buildings & objects
+  for (const b of buildings) drawBuilding(b);
+  for (const o of objects) drawObject(o);
+
+  // Speech bubbles
+  for (let i=speechBubbles.length-1;i>=0;i--) {
+    const sb=speechBubbles[i]; sb.life--;
+    if (sb.life<=0){speechBubbles.splice(i,1);continue;}
+    const a=agentStates[sb.agentId];
+    if (a){sb.x=a.displayX; sb.y=a.displayY-16;}
+    const alpha=Math.min(1,sb.life/30);
+    const tw=ctx.measureText(sb.text).width+12;
+    const bw=Math.max(tw,40);
+    // bubble bg
+    ctx.fillStyle=`rgba(22,27,34,${alpha*0.92})`;
+    ctx.beginPath(); ctx.roundRect(sb.x+TILE-bw/2,sb.y-18,bw,18,6); ctx.fill();
+    ctx.fillStyle=`rgba(88,166,255,${alpha*0.3})`;
+    ctx.strokeStyle=`rgba(88,166,255,${alpha*0.6})`; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(sb.x+TILE-bw/2,sb.y-18,bw,18,6); ctx.stroke();
+    // triangle
+    ctx.fillStyle=`rgba(22,27,34,${alpha*0.92})`; ctx.strokeStyle=`rgba(88,166,255,${alpha*0.6})`;
+    ctx.beginPath(); ctx.moveTo(sb.x+TILE-5,sb.y); ctx.lineTo(sb.x+TILE,sb.y+6); ctx.lineTo(sb.x+TILE+5,sb.y);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // text
+    ctx.fillStyle=`rgba(230,237,243,${alpha})`; ctx.font='10px "Noto Sans SC"';
+    ctx.textAlign='center'; ctx.fillText(sb.text,sb.x+TILE,sb.y-6); ctx.textAlign='start';
   }
 
-  // Draw objects
-  for (const o of objects) {
-    drawObject(o);
+  // Particles
+  for (let i=particles.length-1;i>=0;i--) {
+    const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.life--;
+    if (p.life<=0){particles.splice(i,1);continue;}
+    ctx.globalAlpha=p.life/30;
+    ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,2,2);
+    ctx.globalAlpha=1;
   }
 
-  // Draw speech bubbles (behind agents)
-  for (let i = speechBubbles.length - 1; i >= 0; i--) {
-    const sb = speechBubbles[i];
-    sb.life--;
-    if (sb.life <= 0) { speechBubbles.splice(i,1); continue; }
-    const alpha = Math.min(1, sb.life / 30);
-    const a = agentStates[sb.agentId];
-    if (a) {
-      sb.x = a.displayX;
-      sb.y = a.displayY - 16;
-    }
-    const tw = ctx.measureText(sb.text).width + 8;
-    ctx.fillStyle = `rgba(255,255,255,${alpha*0.9})`;
-    ctx.beginPath();
-    ctx.roundRect(sb.x + TILE - tw/2, sb.y - 14, tw, 14, 4);
-    ctx.fill();
-    // Triangle
-    ctx.fillStyle = `rgba(255,255,255,${alpha*0.9})`;
-    ctx.beginPath();
-    ctx.moveTo(sb.x + TILE - 4, sb.y);
-    ctx.lineTo(sb.x + TILE, sb.y + 6);
-    ctx.lineTo(sb.x + TILE + 4, sb.y);
-    ctx.fill();
-    // Text
-    ctx.fillStyle = `rgba(0,0,0,${alpha})`;
-    ctx.font = '8px "Press Start 2P", monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(sb.text, sb.x + TILE, sb.y - 3);
-    ctx.textAlign = 'start';
-  }
-
-  // Draw particles
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    p.x += p.vx;
-    p.y += p.vy;
-    p.life--;
-    if (p.life <= 0) { particles.splice(i,1); continue; }
-    const alpha = p.life / 50;
-    ctx.fillStyle = p.color.replace(')',`,${alpha})`).replace('rgb','rgba');
-    if (p.color.startsWith('#')) {
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = alpha;
-      ctx.fillRect(p.x, p.y, 2, 2);
-      ctx.globalAlpha = 1;
-    } else {
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x, p.y, 2, 2);
-    }
-  }
-
-  // Draw agents (with smooth position interpolation)
-  const sortedAgents = Object.values(agentStates).sort((a,b) => a.displayY - b.displayY);
-  for (const a of sortedAgents) {
-    // Smooth lerp toward target
-    const speed = 8; // tiles per second interpolation
-    a.displayX = lerp(a.displayX, a.targetX, Math.min(1, dt * speed));
-    a.displayY = lerp(a.displayY, a.targetY, Math.min(1, dt * speed));
-
-    drawAgentSprite(a, a.displayX, a.displayY);
-
-    // Name label
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillRect(a.displayX + 2, a.displayY + 26, ctx.measureText(a.name).width + 6, 10);
-    ctx.fillStyle = '#fff';
-    ctx.font = '7px "Press Start 2P", monospace';
-    ctx.fillText(a.name, a.displayX + 4, a.displayY + 34);
-
-    // Thought bubble (small, if idle and has thought)
-    if (a.thought && speechBubbles.filter(s=>s.agentId===a.id).length===0) {
-      // Only show Zzz or ... for idle thoughts
-      if (a.thought.includes('发呆') || a.thought.includes('放空') || a.thought.includes('看看')) {
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.font = '6px "Press Start 2P", monospace';
-        ctx.fillText('...', a.displayX + TILE, a.displayY - 2);
-      }
-    }
+  // Agents sorted by Y
+  const sorted=Object.values(agentStates).sort((a,b)=>a.displayY-b.displayY);
+  for (const a of sorted) {
+    a.displayX=lerp(a.displayX,a.targetX,Math.min(1,dt*8));
+    a.displayY=lerp(a.displayY,a.targetY,Math.min(1,dt*8));
+    drawAgentSprite(a,a.displayX,a.displayY);
+    drawEmoji(a,a.displayX,a.displayY);
+    // Name tag
+    ctx.fillStyle='rgba(0,0,0,0.55)';
+    const nw=ctx.measureText(a.name).width;
+    ctx.fillRect(a.displayX+12-nw/2,a.displayY+26,nw+8,12);
+    ctx.fillStyle='#e6edf3'; ctx.font='9px "Noto Sans SC"'; ctx.textAlign='center';
+    ctx.fillText(a.name,a.displayX+16,a.displayY+35); ctx.textAlign='start';
   }
 }
-
-// Start render loop
 requestAnimationFrame(render);
 </script>
 </body>
