@@ -2,7 +2,7 @@
 
 TILE_SIZE = 24
 MAP_WIDTH = 40
-MAP_HEIGHT = 30
+MAP_HEIGHT = 31
 
 # Tile types
 GRASS = 0
@@ -22,7 +22,7 @@ TILE_COLORS = {
 
 # 40x30 map — each character is one tile
 # . = grass  ~ = water  # = stone path  * = flowers  = = bridge
-MAP_LEGEND = {'.': GRASS, '~': WATER, '#': STONE, '*': FLOWERS, '=': BRIDGE, 'H': GRASS, 'C': GRASS, 'M': GRASS, 'W': GRASS, 'B': GRASS}
+MAP_LEGEND = {'.': GRASS, '~': WATER, '#': STONE, '*': FLOWERS, '=': BRIDGE, 'H': GRASS, 'T': GRASS, 'C': STONE, 'M': STONE, 'W': STONE, 'B': STONE}
 
 _RAW = [
     "........................................",
@@ -61,6 +61,13 @@ _RAW = [
 # Parse raw map into 2D integer grid
 WORLD_MAP = [[MAP_LEGEND[c] for c in row] for row in _RAW]
 
+# Auto-generate tree objects from 'T' markers in the map
+_AUTO_TREES = []
+for _y, _row in enumerate(_RAW):
+    for _x, _ch in enumerate(_row):
+        if _ch == 'T':
+            _AUTO_TREES.append({"id": f"tree_{_x}_{_y}", "x": _x, "y": _y, "type": "tree"})
+
 # Buildings / objects (tile coordinates)
 # Each building occupies a rectangular area
 BUILDINGS = [
@@ -83,10 +90,7 @@ OBJECTS = [
     {"id": "bench_4", "x": 18, "y": 21, "type": "bench", "direction": "h"},
     # Campfire
     {"id": "campfire", "x": 13, "y": 15, "type": "campfire"},
-    # Trees (decorative duplicates from map tiles — these are the explicit interactive ones)
-    {"id": "tree_plaza_1", "x": 9, "y": 14, "type": "tree"},
-    {"id": "tree_plaza_2", "x": 28, "y": 14, "type": "tree"},
-]
+] + _AUTO_TREES
 
 # Agent presets — 5 villagers
 AGENTS = [
