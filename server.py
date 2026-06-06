@@ -19,6 +19,7 @@ connected_clients = set()
 
 async def broadcast(msg):
     """Send a JSON message to all connected WebSocket clients."""
+    global connected_clients
     dead = set()
     data = json.dumps(msg, ensure_ascii=False)
     for ws in connected_clients:
@@ -41,7 +42,9 @@ async def agent_loop(agent, world_obj, llm):
                 event["name"] = agent.name
                 await broadcast(event)
             except Exception as e:
+                import traceback
                 print(f"[Agent {agent.name} error] {e}")
+                traceback.print_exc()
         await asyncio.sleep(tick_speed)
 
 
