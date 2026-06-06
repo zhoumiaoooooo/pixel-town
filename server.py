@@ -1,0 +1,97 @@
+"""FastAPI server with WebSocket for real-time agent simulation."""
+
+import asyncio
+import json
+from fastapi import FastAPI, WebSocket
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+
+app = FastAPI(title="Pixel Town Sim")
+
+# Global state — set by main.py
+world = None
+agents = {}
+llm_client = None
+paused = False
+tick_speed = 5.0  # seconds between ticks per agent
+connected_clients = set()
+
+
+async def broadcast(msg):
+    """Send a JSON message to all connected WebSocket clients."""
+    dead = set()
+    data = json.dumps(msg, ensure_ascii=False)
+    for ws in connected_clients:
+        try:
+            await ws.send_text(data)
+        except Exception:
+            dead.add(ws)
+    connected_clients -= dead
+
+
+async def agent_loop(agent, world_obj, llm):
+    """Async loop for a single agent — runs one tick every tick_speed seconds."""
+    await asyncio.sleep(agent.rng.uniform(0, 2))  # stagger start
+    while True:
+        if not paused:
+            try:
+                event = await agent.tick(world_obj, llm)
+                # Attach agent info to event for frontend
+                event["color"] = agent.color
+                event["name"] = agent.name
+                await broadcast(event)
+            except Exception as e:
+                print(f"[Agent {agent.name} error] {e}")
+        await asyncio.sleep(tick_speed)
+
+
+@app.websocket("/ws")
+async def ws_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    connected_clients.add(websocket)
+
+    # Send initial world state
+    await websocket.send_text(json.dumps({
+        "type": "world_init",
+        "map": world.grid,
+        "buildings": world.buildings,
+        "objects": world.objects,
+        "agents": [a.to_dict() for a in agents.values()],
+        "tick_speed": tick_speed,
+        "paused": paused,
+    }, ensure_ascii=False))
+
+    try:
+        while True:
+            raw = await websocket.receive_text()
+            msg = json.loads(raw)
+            msg_type = msg.get("type")
+
+            if msg_type == "click_agent":
+                agent_id = msg.get("agent_id")
+                if agent_id in agents:
+                    await websocket.send_text(json.dumps({
+                        "type": "agent_detail",
+                        "agent": agents[agent_id].to_dict(),
+                    }, ensure_ascii=False))
+
+            elif msg_type == "toggle_pause":
+                global paused
+                paused = not paused
+                await broadcast({"type": "pause_state", "paused": paused})
+
+            elif msg_type == "set_speed":
+                global tick_speed
+                tick_speed = max(1.0, float(msg.get("speed", 5.0)))
+                await broadcast({"type": "speed_changed", "speed": tick_speed})
+
+    except Exception:
+        pass
+    finally:
+        connected_clients.discard(websocket)
+
+
+# Mount static files AFTER all routes
+static_dir = Path(__file__).parent / "static"
+static_dir.mkdir(exist_ok=True)
+app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
