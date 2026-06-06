@@ -1,13 +1,14 @@
 """Entry point — create world, agents, relationships, and start the server."""
 
 import asyncio
+import os
 import uvicorn
 import random
 
 from config import WORLD_MAP, BUILDINGS, OBJECTS, AGENTS
 from world import World
 from agent import Agent, Relationship
-from llm import LLMClient, MockLLMClient
+from llm import DeepSeekClient, LLMClient, MockLLMClient
 import server
 
 
@@ -15,19 +16,25 @@ async def main():
     w = World(WORLD_MAP, BUILDINGS, OBJECTS)
     server.world = w
 
-    # Choose LLM client
-    try:
-        import httpx
-        async with httpx.AsyncClient(timeout=2.0) as c:
-            resp = await c.get("http://localhost:11434/api/tags")
-            if resp.status_code == 200:
-                llm = LLMClient()
-                print("[OK] Ollama connected, using LLMClient")
-            else:
-                raise Exception("Ollama not available")
-    except Exception:
-        llm = MockLLMClient()
-        print("[WARN] Ollama not available, using MockLLMClient")
+    # Choose LLM: DeepSeek API → Ollama → Mock
+    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+    if api_key:
+        llm = DeepSeekClient(api_key=api_key)
+        print("[OK] DeepSeek API connected (deepseek-chat)")
+    else:
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=2.0) as c:
+                resp = await c.get("http://localhost:11434/api/tags")
+                if resp.status_code == 200:
+                    llm = LLMClient()
+                    print("[OK] Ollama connected, using LLMClient")
+                else:
+                    raise Exception("Ollama not available")
+        except Exception:
+            llm = MockLLMClient()
+            print("[WARN] No DEEPSEEK_API_KEY or Ollama, using MockLLMClient")
+            print("[TIP]  Set $env:DEEPSEEK_API_KEY = 'sk-...' for real AI")
 
     server.llm_client = llm
 
