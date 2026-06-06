@@ -22,7 +22,7 @@ TILE_COLORS = {
 
 # 40x30 map — each character is one tile
 # . = grass  ~ = water  # = stone path  * = flowers  = = bridge
-MAP_LEGEND = {'.': GRASS, '~': WATER, '#': STONE, '*': FLOWERS, '=': BRIDGE}
+MAP_LEGEND = {'.': GRASS, '~': WATER, '#': STONE, '*': FLOWERS, '=': BRIDGE, 'H': GRASS, 'C': GRASS, 'M': GRASS, 'W': GRASS, 'B': GRASS}
 
 _RAW = [
     "........................................",
