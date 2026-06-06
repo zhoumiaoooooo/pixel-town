@@ -58,8 +58,11 @@ _RAW = [
     "........................................",
 ]
 
-# Parse raw map into 2D integer grid
-WORLD_MAP = [[MAP_LEGEND[c] for c in row] for row in _RAW]
+# Parse raw map into 2D integer grid (pad short rows to MAP_WIDTH)
+WORLD_MAP = []
+for row in _RAW:
+    padded = row.ljust(MAP_WIDTH, '.')
+    WORLD_MAP.append([MAP_LEGEND[c] for c in padded])
 
 # Auto-generate tree objects from 'T' markers in the map
 _AUTO_TREES = []
