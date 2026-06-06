@@ -2,7 +2,12 @@
 
 import json
 import re
-import httpx
+
+try:
+    import httpx
+    _HAS_HTTPX = True
+except ImportError:
+    _HAS_HTTPX = False
 
 SYSTEM_PROMPT = """你是一个像素小镇上的角色。你的行为要符合你的性格和角色设定。
 你必须只回复一个 JSON 对象，不要有任何额外文字。
@@ -32,6 +37,8 @@ class LLMClient:
 
     async def decide(self, agent_state, perception):
         """Send agent state + perception to LLM, return parsed action dict."""
+        if not _HAS_HTTPX:
+            return {"action": "idle", "target": "", "text": "", "thought": "（httpx未安装）"}
         user_prompt = self._build_prompt(agent_state, perception)
 
         async with httpx.AsyncClient(timeout=20.0) as client:

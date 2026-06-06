@@ -47,6 +47,7 @@ async def agent_loop(agent, world_obj, llm):
 
 @app.websocket("/ws")
 async def ws_endpoint(websocket: WebSocket):
+    global paused, tick_speed
     await websocket.accept()
     connected_clients.add(websocket)
 
@@ -76,12 +77,10 @@ async def ws_endpoint(websocket: WebSocket):
                     }, ensure_ascii=False))
 
             elif msg_type == "toggle_pause":
-                global paused
                 paused = not paused
                 await broadcast({"type": "pause_state", "paused": paused})
 
             elif msg_type == "set_speed":
-                global tick_speed
                 tick_speed = max(1.0, float(msg.get("speed", 5.0)))
                 await broadcast({"type": "speed_changed", "speed": tick_speed})
 
