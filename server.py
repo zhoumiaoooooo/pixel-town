@@ -13,7 +13,7 @@ world = None
 agents = {}
 llm_client = None
 paused = False
-tick_speed = 5.0  # seconds between ticks per agent
+tick_speed = 12.0  # seconds between ticks per agent
 connected_clients = set()
 
 
@@ -37,9 +37,15 @@ async def agent_loop(agent, world_obj, llm):
         if not paused:
             try:
                 event = await agent.tick(world_obj, llm)
-                # Attach agent info to event for frontend
+                # Advance game time after each agent tick
+                world_obj.advance_time()
+                # Attach agent info + time to event for frontend
                 event["color"] = agent.color
                 event["name"] = agent.name
+                event["time_of_day"] = world_obj.time_of_day
+                event["day_phase"] = world_obj.day_phase()
+                event["day_number"] = world_obj.day_number
+                event["time_label"] = world_obj.time_label()
                 await broadcast(event)
             except Exception as e:
                 import traceback
@@ -63,6 +69,10 @@ async def ws_endpoint(websocket: WebSocket):
         "agents": [a.to_dict() for a in agents.values()],
         "tick_speed": tick_speed,
         "paused": paused,
+        "time_of_day": world.time_of_day,
+        "day_phase": world.day_phase(),
+        "day_number": world.day_number,
+        "time_label": world.time_label(),
     }, ensure_ascii=False))
 
     try:
