@@ -1133,8 +1133,8 @@ function updatePauseUI() {
 function updateSpeedUI() {
   const label = document.getElementById('speed-label'); if (label) label.textContent = `${tickSpeed}s/tick`;
   ['btn-s1','btn-s2','btn-s3'].forEach(id => { const b = document.getElementById(id); if (b) b.classList.remove('active'); });
-  if (tickSpeed >= 7) document.getElementById('btn-s1')?.classList.add('active');
-  else if (tickSpeed <= 3) document.getElementById('btn-s3')?.classList.add('active');
+  if (tickSpeed >= 10) document.getElementById('btn-s1')?.classList.add('active');
+  else if (tickSpeed <= 5) document.getElementById('btn-s3')?.classList.add('active');
   else document.getElementById('btn-s2')?.classList.add('active');
 }
 

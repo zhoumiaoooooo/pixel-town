@@ -586,6 +586,10 @@ class Agent:
         thought = action.get("thought", "")
         gossip_about = action.get("gossip_about", "")
 
+        # Night silence: during sleeping hours, only move home or idle
+        if world.is_sleeping_hours() and action_type in ("speak", "interact"):
+            return self._exec_idle({"thought": "夜深了，大家都在睡觉..."})
+
         if action_type == "move":
             return self._exec_move(action, world, perception)
 
@@ -621,10 +625,10 @@ class Agent:
                             # Enforce min distance: skip tile if too close to non-target agent
                             if approaching_agent_id:
                                 too_close = world.is_too_close_to_agents(
-                                    nx, ny, exclude_id=self.id, min_dist=1)
+                                    nx, ny, exclude_id=self.id, min_dist=2)
                             else:
                                 too_close = world.is_too_close_to_agents(
-                                    nx, ny, exclude_id=self.id, min_dist=3)
+                                    nx, ny, exclude_id=self.id, min_dist=4)
                             if too_close and not (approaching_agent_id and
                                     abs(nx - world.agents[approaching_agent_id].x) +
                                     abs(ny - world.agents[approaching_agent_id].y) <= 2):
@@ -633,9 +637,10 @@ class Agent:
                 self._idle_ticks = 0
 
         # After moving, push away from other agents if too close
-        if not approaching_agent_id:
-            self.x, self.y = world.push_away_from_agents(
-                self.x, self.y, exclude_id=self.id, min_dist=3)
+        # Always push away from others — even when approaching a target, keep some distance
+        self.x, self.y = world.push_away_from_agents(
+            self.x, self.y, exclude_id=self.id,
+            min_dist=4 if not approaching_agent_id else 2)
 
         # Clamp to visible area — MUST be last (sprite is 128px tall, canvas is 31 tiles)
         self.x = max(0, min(39, self.x))
