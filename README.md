@@ -51,7 +51,14 @@
 ## 🚀 快速开始
 
 ```bash
+# 1. 克隆仓库
+git clone https://github.com/zhoumiaoooooo/pixel-town.git
+cd pixel-town
+
+# 2. 安装依赖（只需要 3 个包）
 pip install -r requirements.txt
+
+# 3. 选择一种方式启动：
 
 # 方式一：DeepSeek API（推荐，效果最好）
 $env:DEEPSEEK_API_KEY = "sk-..."
@@ -64,7 +71,8 @@ python main.py
 # 方式三：Mock 模式（无需任何 API，使用内置逻辑）
 python main.py
 
-# 打开 http://localhost:8000
+# 4. 打开浏览器
+# http://localhost:8000
 ```
 
 ---
